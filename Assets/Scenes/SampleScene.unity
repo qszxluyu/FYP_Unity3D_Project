@@ -208,13 +208,13 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 282840810}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62019fa7ea988494f98fa0278d49f43b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   distanceAway: 200
-  distanceUp: 40
+  distanceUp: 0
   smooth: 3
 --- !u!20 &282840813
 Camera:
@@ -258,7 +258,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 282840810}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.15, z: -235}
+  m_LocalPosition: {x: 0, y: 0.15, z: -228}
   m_LocalScale: {x: 1, y: 1, z: 25.397766}
   m_Children: []
   m_Father: {fileID: 0}
@@ -343,6 +343,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1405594672}
   - component: {fileID: 1405594673}
+  - component: {fileID: 1405594674}
   m_Layer: 0
   m_Name: RacketPviot
   m_TagString: Untagged
@@ -375,19 +376,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62a4d49458816ed41ad8469e3fd48406, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveSpeed: 5
-  RotateSpeed: 5
-  Qx: 0
-  Qy: 0
-  Qz: 0
-  Qw: 0
+  BufferSize: 10
+  QuatX: 0
+  QuatY: 0
+  QuatZ: 0
+  QuatW: 0
   SpeedX: 0
   SpeedY: 0
   SpeedZ: 0
-  Ax: 0
-  Ay: 0
-  Az: 0
-  LineIndex: 0
+  BufferSpeedX: []
+  BufferSpeedY: []
+  BufferSpeedZ: []
+  AccelX: 0
+  AccelY: 0
+  AccelZ: 0
+--- !u!114 &1405594674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1405594671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bc5f48af2cffd747a079fe8c632e2c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  portName: COM6
+  baudRate: 115200
+  messageListener: {fileID: 0}
+  reconnectionDelay: 1000
+  maxUnreadMessages: 10
 --- !u!4 &1880234462 stripped
 Transform:
   m_PrefabParentObject: {fileID: 400012, guid: b48bfdaee22d57144ada71dc98748f0e, type: 3}

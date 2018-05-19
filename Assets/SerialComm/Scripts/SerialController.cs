@@ -26,10 +26,10 @@ using System.Threading;
 public class SerialController : MonoBehaviour
 {
     [Tooltip("Port name with which the SerialPort object will be created.")]
-    public string portName = "COM3";
+    public string portName = "COM6";
 
     [Tooltip("Baud rate that the serial device is using to transmit data.")]
-    public int baudRate = 9600;
+    public int baudRate = 115200;
 
     [Tooltip("Reference to an scene object that will receive the events of connection, " +
              "disconnection and the messages from the serial device.")]
@@ -41,7 +41,7 @@ public class SerialController : MonoBehaviour
 
     [Tooltip("Maximum number of unread data messages in the queue. " +
              "New messages will be discarded.")]
-    public int maxUnreadMessages = 1;
+    public int maxUnreadMessages = 10;
 
     // Constants used to mark the start and end of a connection. There is no
     // way you can generate clashing messages from your serial device, as I
