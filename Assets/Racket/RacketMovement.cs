@@ -12,70 +12,37 @@ public class RacketMovement : MonoBehaviour {
     //定义旋转的速度
     //public float RotateSpeed = 5f;
 
-    public int BufferSize = 255;
-
     public float QuatX, QuatY, QuatZ, QuatW;
-
-    public float SpeedX, SpeedY, SpeedZ;
-
-    public float[] BufferAccelX, BufferAccelY, BufferAccelZ;
-
-    private int BufferPointer;
 
     public float AccelX, AccelY, AccelZ;
 
-    private float SumAccelX, SumAccelY, SumAccelZ;
-
-    public float AvgAccelX, AvgAccelY, AvgAccelZ;
+    public float SpeedX, SpeedY, SpeedZ;
 
     private string[] QuatTestLines;
 
     private int LineIndex = 0;
 
+    private Vector3 OriginalPosition;
+
+    //Parameters used for Average
+    public bool UseAvgAccel = false;
+
+    public int BufferSize = 8;
+
+    public float[] BufferAccelX, BufferAccelY, BufferAccelZ;
+
+    private int BufferPointer;
+
+    private float SumAccelX, SumAccelY, SumAccelZ;
+
+    public float AvgAccelX, AvgAccelY, AvgAccelZ;
+
     void Start()
     {
 
-        SpeedX = 0;
-        SpeedY = 0;
-        SpeedZ = 0;
-        SumAccelX = 0;
-        SumAccelY = 0;
-        SumAccelZ = 0;
-        BufferAccelX = new float[BufferSize];
-        BufferAccelY = new float[BufferSize];
-        BufferAccelZ = new float[BufferSize];
-        BufferPointer = 0;
+        OriginalPosition = this.transform.position;
 
-        //Initiate the Accel Buffers   
-        int IniIndex=0;
-
-        while (IniIndex < BufferSize) {
-
-            string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
-
-            string[] QAData = WholeLine.Split(new[] { ',' });
-
-            if (QAData.Length == 7)
-            {
-                IniIndex++;
-
-                float.TryParse(QAData[4], out BufferAccelX[IniIndex]);
-                float.TryParse(QAData[5], out BufferAccelY[IniIndex]);
-                float.TryParse(QAData[6], out BufferAccelZ[IniIndex]);
-
-                SumAccelX += BufferAccelX[IniIndex];
-                SumAccelY += BufferAccelY[IniIndex];
-                SumAccelZ += BufferAccelZ[IniIndex];
-
-            }
-
-            AvgAccelX = SumAccelX / BufferSize;
-            AvgAccelY = SumAccelY / BufferSize;
-            AvgAccelZ = SumAccelZ / BufferSize;
-
-        }
-
-
+        ResetParameters();
 
         //Choose which test raw file to use
 
@@ -83,7 +50,6 @@ public class RacketMovement : MonoBehaviour {
         //QuatTestLines = System.IO.File.ReadAllLines(@"..\FYP_Serial_Quat\Assets\Racket\Random.txt");
 
         //QuatTests();
-
 
     }
 
@@ -105,6 +71,16 @@ public class RacketMovement : MonoBehaviour {
         //WithAccel();
 
         //RealTimeSerial();
+
+        // run factory self test and calibration routine
+        if (Input.GetKey(KeyCode.T))
+        {
+
+            GameObject.Find("RacketPviot").GetComponent<SerialController>().SendSerialMessage("t");
+
+            ResetParameters();
+
+        }
 
     }
 
@@ -149,19 +125,19 @@ public class RacketMovement : MonoBehaviour {
             BufferPointer -= BufferSize;
         }
 
-        
+        /*
         //Use the zero mean version of the accelation
         SpeedX += (AccelX - AvgAccelX) * Time.deltaTime;
         SpeedY += (AccelY - AvgAccelY) * Time.deltaTime;
         SpeedZ += (AccelZ - AvgAccelZ) * Time.deltaTime;
-        
-
-        /*
-        //Original accelation
-        SpeedX += AccelX * Time.deltaTime;
-        SpeedY += AccelY * Time.deltaTime;
-        SpeedZ += AccelZ * Time.deltaTime;
         */
+
+        
+        //Original accelation
+        SpeedX += AvgAccelX * Time.deltaTime;
+        SpeedY += AvgAccelY * Time.deltaTime;
+        SpeedZ += AvgAccelZ * Time.deltaTime;
+        
 
         Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
 
@@ -194,15 +170,69 @@ public class RacketMovement : MonoBehaviour {
         float.TryParse(QAData[5], out AccelY);
         float.TryParse(QAData[6], out AccelZ);
 
-        SpeedX += AccelX;
-        SpeedY += AccelY;
-        SpeedZ += AccelZ;
+        SpeedX += AccelX * Time.deltaTime;
+        SpeedY += AccelY * Time.deltaTime;
+        SpeedZ += AccelZ * Time.deltaTime;
 
         Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
 
         //Apply the transform
         this.transform.Translate(SpeedX * Time.deltaTime, SpeedZ * Time.deltaTime, SpeedY * Time.deltaTime, Space.Self);
         this.transform.rotation = rotate;
+
+    }
+
+    void ResetParameters()
+    {
+
+        this.transform.position = OriginalPosition;
+
+        SpeedX = 0;
+        SpeedY = 0;
+        SpeedZ = 0;
+
+        if (UseAvgAccel) {
+
+            SumAccelX = 0;
+            SumAccelY = 0;
+            SumAccelZ = 0;
+            BufferAccelX = new float[BufferSize];
+            BufferAccelY = new float[BufferSize];
+            BufferAccelZ = new float[BufferSize];
+            BufferPointer = 0;
+
+
+            //Initiate the Accel Buffers   
+            int IniIndex = 0;
+
+            while (IniIndex < BufferSize)
+            {
+
+                string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
+
+                string[] QAData = WholeLine.Split(new[] { ',' });
+
+                if (QAData.Length == 7)
+                {
+                    IniIndex++;
+
+                    float.TryParse(QAData[4], out BufferAccelX[IniIndex]);
+                    float.TryParse(QAData[5], out BufferAccelY[IniIndex]);
+                    float.TryParse(QAData[6], out BufferAccelZ[IniIndex]);
+
+                    SumAccelX += BufferAccelX[IniIndex];
+                    SumAccelY += BufferAccelY[IniIndex];
+                    SumAccelZ += BufferAccelZ[IniIndex];
+
+                }
+
+                AvgAccelX = SumAccelX / BufferSize;
+                AvgAccelY = SumAccelY / BufferSize;
+                AvgAccelZ = SumAccelZ / BufferSize;
+
+            }
+
+        }
 
     }
 

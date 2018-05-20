@@ -273,7 +273,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 400012, guid: b48bfdaee22d57144ada71dc98748f0e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -9.84
+      value: -12.64
       objectReference: {fileID: 0}
     - target: {fileID: 400012, guid: b48bfdaee22d57144ada71dc98748f0e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -358,7 +358,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1405594671}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.59, y: 0, z: 0}
+  m_LocalPosition: {x: 10.39, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1880234462}
@@ -376,20 +376,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62a4d49458816ed41ad8469e3fd48406, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BufferSize: 255
   QuatX: 0
   QuatY: 0
   QuatZ: 0
   QuatW: 0
-  SpeedX: 0
-  SpeedY: 0
-  SpeedZ: 0
-  BufferAccelX: []
-  BufferAccelY: []
-  BufferAccelZ: []
   AccelX: 0
   AccelY: 0
   AccelZ: 0
+  SpeedX: 0
+  SpeedY: 0
+  SpeedZ: 0
+  UseAvgAccel: 1
+  BufferSize: 8
+  BufferAccelX: []
+  BufferAccelY: []
+  BufferAccelZ: []
   AvgAccelX: 0
   AvgAccelY: 0
   AvgAccelZ: 0
@@ -408,7 +409,7 @@ MonoBehaviour:
   baudRate: 115200
   messageListener: {fileID: 0}
   reconnectionDelay: 1000
-  maxUnreadMessages: 10
+  maxUnreadMessages: 1
 --- !u!4 &1880234462 stripped
 Transform:
   m_PrefabParentObject: {fileID: 400012, guid: b48bfdaee22d57144ada71dc98748f0e, type: 3}
