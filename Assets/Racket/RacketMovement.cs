@@ -139,10 +139,12 @@ public class RacketMovement : MonoBehaviour {
         SpeedZ += AvgAccelZ * Time.deltaTime;
         
 
-        Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
+        //Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
+        Quaternion rotate = new Quaternion(QuatY, QuatX, QuatZ, QuatW);
 
         //Apply the transform
-        this.transform.Translate(SpeedX * Time.deltaTime, SpeedY* Time.deltaTime, SpeedZ * Time.deltaTime, Space.Self);
+        //this.transform.Translate(SpeedX * Time.deltaTime, SpeedY* Time.deltaTime, SpeedZ * Time.deltaTime, Space.Self);
+        this.transform.Translate(SpeedY * Time.deltaTime, SpeedX * Time.deltaTime, SpeedZ * Time.deltaTime, Space.Self);
         //this.transform.Translate(SpeedX, SpeedY, SpeedZ, Space.Self);
         this.transform.rotation = rotate;
 
