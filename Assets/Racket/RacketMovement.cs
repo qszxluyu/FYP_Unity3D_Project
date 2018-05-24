@@ -6,17 +6,21 @@ using UnityEngine;
 
 public class RacketMovement : MonoBehaviour {
 
-    //Use for original code
-    //定义移动的速度
-    //public float MoveSpeed = 5f;
-    //定义旋转的速度
-    //public float RotateSpeed = 5f;
-
     public float QuatX, QuatY, QuatZ, QuatW;
 
     public float AccelX, AccelY, AccelZ;
 
+    private float LastAccelX, LastAccelY, LastAccelZ;
+
     public float SpeedX, SpeedY, SpeedZ;
+
+    private float LastSpeedX, LastSpeedY, LastSpeedZ;
+
+    public float DispX, DispY, DispZ;
+
+    private float LastDispX, LastDispY, LastDispZ;
+
+    public float MagnitudeAccelThreshold = 0.25f;
 
     private string[] QuatTestLines;
 
@@ -25,13 +29,9 @@ public class RacketMovement : MonoBehaviour {
     private Vector3 OriginalPosition;
 
     //Parameters used for Average
-    public bool UseAvgAccel = false;
+    public bool UseAvgAccel = true;
 
-    public int BufferSize = 8;
-
-    public float[] BufferAccelX, BufferAccelY, BufferAccelZ;
-
-    private int BufferPointer;
+    public int AvgSize = 8;
 
     private float SumAccelX, SumAccelY, SumAccelZ;
 
@@ -57,22 +57,7 @@ public class RacketMovement : MonoBehaviour {
     void Update()
     {
 
-        //RealTimeSerial();
-
-        RealTimeSerialWithAvg();
-
-    }
-
-    private void FixedUpdate()
-    {
-
-        //WithoutAccel();
-
-        //WithAccel();
-
-        //RealTimeSerial();
-
-        // run factory self test and calibration routine
+        // Run factory self test and calibration routine
         if (Input.GetKey(KeyCode.T))
         {
 
@@ -84,69 +69,16 @@ public class RacketMovement : MonoBehaviour {
 
     }
 
-    void RealTimeSerialWithAvg()
+    void FixedUpdate()
     {
 
-        string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
+        //WithoutAccel();
 
-        string[] QAData = WholeLine.Split(new[] { ',' });
+        //WithAccel();
 
-        if (QAData.Length != 7)
-        {
-            Debug.Log("Invalid input, data abandoned.");
-            return;
-        }
+        //RealTimeSerial();
 
-        float.TryParse(QAData[0], out QuatX);
-        float.TryParse(QAData[1], out QuatY);
-        float.TryParse(QAData[2], out QuatZ);
-        float.TryParse(QAData[3], out QuatW);
-
-        float.TryParse(QAData[4], out AccelX);
-        float.TryParse(QAData[5], out AccelY);
-        float.TryParse(QAData[6], out AccelZ);
-
-        BufferAccelX[BufferPointer] = AccelX;
-        BufferAccelY[BufferPointer] = AccelY;
-        BufferAccelZ[BufferPointer] = AccelZ;
-
-        //Update the average
-        SumAccelX = AvgAccelX * (BufferSize - 1) + AccelX;
-        AvgAccelX = SumAccelX / BufferSize;
-        SumAccelY = AvgAccelY * (BufferSize - 1) + AccelY;
-        AvgAccelY = SumAccelY / BufferSize;
-        SumAccelZ = AvgAccelZ * (BufferSize - 1) + AccelZ;
-        AvgAccelZ = SumAccelZ / BufferSize;
-
-        BufferPointer++;
-
-        if (BufferPointer>=BufferSize)
-        {
-            BufferPointer -= BufferSize;
-        }
-
-        /*
-        //Use the zero mean version of the accelation
-        SpeedX += (AccelX - AvgAccelX) * Time.deltaTime;
-        SpeedY += (AccelY - AvgAccelY) * Time.deltaTime;
-        SpeedZ += (AccelZ - AvgAccelZ) * Time.deltaTime;
-        */
-
-        
-        //Original accelation
-        SpeedX += AvgAccelX * Time.deltaTime;
-        SpeedY += AvgAccelY * Time.deltaTime;
-        SpeedZ += AvgAccelZ * Time.deltaTime;
-        
-
-        //Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
-        Quaternion rotate = new Quaternion(QuatY, QuatX, QuatZ, QuatW);
-
-        //Apply the transform
-        //this.transform.Translate(SpeedX * Time.deltaTime, SpeedY* Time.deltaTime, SpeedZ * Time.deltaTime, Space.Self);
-        this.transform.Translate(SpeedY * Time.deltaTime, SpeedX * Time.deltaTime, SpeedZ * Time.deltaTime, Space.Self);
-        //this.transform.Translate(SpeedX, SpeedY, SpeedZ, Space.Self);
-        this.transform.rotation = rotate;
+        RealTimeSerialWithAvg();
 
     }
 
@@ -163,23 +95,128 @@ public class RacketMovement : MonoBehaviour {
             return;
         }
 
-        float.TryParse(QAData[0], out QuatX);
-        float.TryParse(QAData[1], out QuatY);
-        float.TryParse(QAData[2], out QuatZ);
-        float.TryParse(QAData[3], out QuatW);
+        float.TryParse(QAData[0], out QuatW);
+        float.TryParse(QAData[1], out QuatX);
+        float.TryParse(QAData[2], out QuatY);
+        float.TryParse(QAData[3], out QuatZ);
 
         float.TryParse(QAData[4], out AccelX);
         float.TryParse(QAData[5], out AccelY);
         float.TryParse(QAData[6], out AccelZ);
 
-        SpeedX += AccelX * Time.deltaTime;
-        SpeedY += AccelY * Time.deltaTime;
-        SpeedZ += AccelZ * Time.deltaTime;
+        // Use a threshold to determine the racket is moved or not
+        float MagnitudeAccel = Mathf.Sqrt( AccelX*AccelX + AccelY*AccelY + AccelZ*AccelZ );
 
-        Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
+        if (MagnitudeAccel < MagnitudeAccelThreshold)
+        {
+            SpeedX = 0;
+            SpeedY = 0;
+            SpeedZ = 0;
+        }
+        else
+        {
+            SpeedX += AvgAccelX * Time.deltaTime;
+            SpeedY += AvgAccelY * Time.deltaTime;
+            SpeedZ += AvgAccelZ * Time.deltaTime;
+        }
+
+        Quaternion rotate = new Quaternion(-QuatX, -QuatZ, -QuatY, QuatW);
 
         //Apply the transform
-        this.transform.Translate(SpeedX * Time.deltaTime, SpeedZ * Time.deltaTime, SpeedY * Time.deltaTime, Space.Self);
+
+        this.transform.Translate(SpeedX, SpeedZ, SpeedY, Space.Self);
+        this.transform.rotation = rotate;
+
+    }
+
+    void RealTimeSerialWithAvg()
+    {
+
+        string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
+
+        string[] QAData = WholeLine.Split(new[] { ',' });
+
+        if (QAData.Length != 7)
+        {
+            Debug.Log("Invalid input, data abandoned.");
+            return;
+        }
+
+        LastAccelX = AccelX;
+        LastAccelY = AccelY;
+        LastAccelZ = AccelZ;
+
+        LastSpeedX = SpeedX;
+        LastSpeedY = SpeedY;
+        LastSpeedZ = SpeedZ;
+
+        LastDispX = DispX;
+        LastDispY = DispY;
+        LastDispZ = DispZ;
+
+        float.TryParse(QAData[0], out QuatW);
+        float.TryParse(QAData[1], out QuatX);
+        float.TryParse(QAData[2], out QuatY);
+        float.TryParse(QAData[3], out QuatZ);
+
+        float.TryParse(QAData[4], out AccelX);
+        float.TryParse(QAData[5], out AccelY);
+        float.TryParse(QAData[6], out AccelZ);
+
+        //Update the average
+        SumAccelX = AvgAccelX * (AvgSize - 1) + AccelX;
+        AvgAccelX = SumAccelX / AvgSize;
+        SumAccelY = AvgAccelY * (AvgSize - 1) + AccelY;
+        AvgAccelY = SumAccelY / AvgSize;
+        SumAccelZ = AvgAccelZ * (AvgSize - 1) + AccelZ;
+        AvgAccelZ = SumAccelZ / AvgSize;
+
+        // Use a threshold to filter the mechanical noise
+        float MagnitudeAccel = Mathf.Sqrt(AvgAccelX * AvgAccelX + AvgAccelY * AvgAccelY + AvgAccelZ * AvgAccelZ);
+
+        if (MagnitudeAccel < MagnitudeAccelThreshold)
+        {
+
+            SpeedX = 0;
+            SpeedY = 0;
+            SpeedZ = 0;
+
+            DispX = 0;
+            DispY = 0;
+            DispZ = 0;        
+            
+        }
+        else
+        {
+            //TODO:Use AvgAccel or Zero mean version Accel?
+            AccelX = AvgAccelX;
+            AccelY = AvgAccelY;
+            AccelZ = AvgAccelZ;
+
+            //Apply the double integration
+            SpeedX = LastSpeedX + LastAccelX * Time.fixedDeltaTime + (AccelX - LastAccelX) * Time.fixedDeltaTime / 2f;
+            SpeedY = LastSpeedY + LastAccelY * Time.fixedDeltaTime + (AccelY - LastAccelY) * Time.fixedDeltaTime / 2f;
+            SpeedZ = LastSpeedZ + LastAccelZ * Time.fixedDeltaTime + (AccelZ - LastAccelZ) * Time.fixedDeltaTime / 2f;
+
+            DispX = LastDispX + LastSpeedX * Time.fixedDeltaTime + (SpeedX - LastSpeedX) * Time.fixedDeltaTime / 2f;
+            DispY = LastDispY + LastSpeedY * Time.fixedDeltaTime + (SpeedY - LastSpeedY) * Time.fixedDeltaTime / 2f;
+            DispZ = LastDispZ + LastSpeedZ * Time.fixedDeltaTime + (SpeedZ - LastSpeedZ) * Time.fixedDeltaTime / 2f;
+
+        }
+
+
+
+
+        Quaternion rotate = new Quaternion(-QuatX, -QuatZ, -QuatY, QuatW);
+
+        //Apply the transform
+
+        this.transform.Translate(SpeedX, SpeedZ, SpeedY, Space.Self);
+        /*
+        this.transform.Translate(Vector3.right * DispX);
+        this.transform.Translate(Vector3.up * DispZ);
+        this.transform.Translate(Vector3.forward * DispY);
+        */
         this.transform.rotation = rotate;
 
     }
@@ -193,21 +230,33 @@ public class RacketMovement : MonoBehaviour {
         SpeedY = 0;
         SpeedZ = 0;
 
+        DispX = 0;
+        DispY = 0;
+        DispZ = 0;
+
+        LastAccelX = 0;
+        LastAccelY = 0;
+        LastAccelZ = 0;
+
+        LastSpeedX = 0;
+        LastSpeedY = 0;
+        LastSpeedZ = 0;
+
+        LastDispX = 0;
+        LastDispY = 0;
+        LastDispZ = 0;
+
+
         if (UseAvgAccel) {
 
             SumAccelX = 0;
             SumAccelY = 0;
             SumAccelZ = 0;
-            BufferAccelX = new float[BufferSize];
-            BufferAccelY = new float[BufferSize];
-            BufferAccelZ = new float[BufferSize];
-            BufferPointer = 0;
 
-
-            //Initiate the Accel Buffers   
+            //Initiate the AvgAccel   
             int IniIndex = 0;
 
-            while (IniIndex < BufferSize)
+            while (IniIndex < AvgSize)
             {
 
                 string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
@@ -216,23 +265,24 @@ public class RacketMovement : MonoBehaviour {
 
                 if (QAData.Length == 7)
                 {
+                
+                    float.TryParse(QAData[4], out AccelX);
+                    float.TryParse(QAData[5], out AccelY);
+                    float.TryParse(QAData[6], out AccelZ);
+
+                    SumAccelX += AccelX;
+                    SumAccelY += AccelY;
+                    SumAccelZ += AccelZ;
+
                     IniIndex++;
-
-                    float.TryParse(QAData[4], out BufferAccelX[IniIndex]);
-                    float.TryParse(QAData[5], out BufferAccelY[IniIndex]);
-                    float.TryParse(QAData[6], out BufferAccelZ[IniIndex]);
-
-                    SumAccelX += BufferAccelX[IniIndex];
-                    SumAccelY += BufferAccelY[IniIndex];
-                    SumAccelZ += BufferAccelZ[IniIndex];
 
                 }
 
-                AvgAccelX = SumAccelX / BufferSize;
-                AvgAccelY = SumAccelY / BufferSize;
-                AvgAccelZ = SumAccelZ / BufferSize;
-
             }
+
+            AvgAccelX = SumAccelX / AvgSize;
+            AvgAccelY = SumAccelY / AvgSize;
+            AvgAccelZ = SumAccelZ / AvgSize;
 
         }
 

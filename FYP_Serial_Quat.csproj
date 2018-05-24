@@ -220,7 +220,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Quat\GetQuat.cs" />
     <Compile Include="Assets\Racket\RacketMovement.cs" />
     <Compile Include="Assets\Scenes\FollowTarget.cs" />
     <Compile Include="Assets\SerialComm\Scripts\Samples\SampleCustomDelimiter.cs" />
