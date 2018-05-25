@@ -6,39 +6,42 @@ using UnityEngine;
 
 public class RacketMovement : MonoBehaviour {
 
-    public float QuatX, QuatY, QuatZ, QuatW;
+    //Parameters used for serial input
+    private string WholeLine;
+    string[] QAData;
 
-    public float AccelX, AccelY, AccelZ;
-
-    private float LastAccelX, LastAccelY, LastAccelZ;
-
-    public float SpeedX, SpeedY, SpeedZ;
-
-    private float LastSpeedX, LastSpeedY, LastSpeedZ;
-
-    public float DispX, DispY, DispZ;
-
-    private float LastDispX, LastDispY, LastDispZ;
-
-    public float MagnitudeAccelThreshold = 0.25f;
-
-    private string[] QuatTestLines;
-
-    private int LineIndex = 0;
-
+    //Parameters used for reset
     private Vector3 OriginalPosition;
 
-    //Parameters used for Average
+    //Parameter used for main update
+    public bool ShowDisp = true;
+    private Quaternion Rotate;
+    public float QuatX, QuatY, QuatZ, QuatW;
+    public float AccelX, AccelY, AccelZ;
+    private float LastAccelX, LastAccelY, LastAccelZ;
+    public float SpeedX, SpeedY, SpeedZ;
+    private float LastSpeedX, LastSpeedY, LastSpeedZ;
+    public float DispX, DispY, DispZ;
+    private float LastDispX, LastDispY, LastDispZ;
+
+    //Parameters used for steady state offset
+    public int SStateLength = 32;
+    public float SStateAccelX, SStateAccelY, SStateAccelZ;
+
+    //Parameter used for mechanical filter
+    public float MagnitudeAccelThreshold = 0.25f;
+
+    //Parameters used for averaging filter
     public bool UseAvgAccel = true;
-
     public int AvgSize = 8;
-
     private float SumAccelX, SumAccelY, SumAccelZ;
-
     public float AvgAccelX, AvgAccelY, AvgAccelZ;
+
 
     void Start()
     {
+
+        UpdataSStateAccel();
 
         OriginalPosition = this.transform.position;
 
@@ -48,8 +51,6 @@ public class RacketMovement : MonoBehaviour {
 
         //QuatTestLines = System.IO.File.ReadAllLines(@"..\FYP_Serial_Quat\Assets\Racket\MoveWithAccelZeroMean.txt");
         //QuatTestLines = System.IO.File.ReadAllLines(@"..\FYP_Serial_Quat\Assets\Racket\Random.txt");
-
-        //QuatTests();
 
     }
 
@@ -63,6 +64,8 @@ public class RacketMovement : MonoBehaviour {
 
             GameObject.Find("RacketPviot").GetComponent<SerialController>().SendSerialMessage("t");
 
+            UpdataSStateAccel();
+
             ResetParameters();
 
         }
@@ -72,76 +75,14 @@ public class RacketMovement : MonoBehaviour {
     void FixedUpdate()
     {
 
-        //WithoutAccel();
-
-        //WithAccel();
-
-        //RealTimeSerial();
-
         RealTimeSerialWithAvg();
-
-    }
-
-    void RealTimeSerial()
-    {
-
-        string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
-
-        string[] QAData = WholeLine.Split(new[] { ',' });
-
-        if (QAData.Length != 7)
-        {
-            Debug.Log("Invalid input, data abandoned.");
-            return;
-        }
-
-        float.TryParse(QAData[0], out QuatW);
-        float.TryParse(QAData[1], out QuatX);
-        float.TryParse(QAData[2], out QuatY);
-        float.TryParse(QAData[3], out QuatZ);
-
-        float.TryParse(QAData[4], out AccelX);
-        float.TryParse(QAData[5], out AccelY);
-        float.TryParse(QAData[6], out AccelZ);
-
-        // Use a threshold to determine the racket is moved or not
-        float MagnitudeAccel = Mathf.Sqrt( AccelX*AccelX + AccelY*AccelY + AccelZ*AccelZ );
-
-        if (MagnitudeAccel < MagnitudeAccelThreshold)
-        {
-            SpeedX = 0;
-            SpeedY = 0;
-            SpeedZ = 0;
-        }
-        else
-        {
-            SpeedX += AvgAccelX * Time.deltaTime;
-            SpeedY += AvgAccelY * Time.deltaTime;
-            SpeedZ += AvgAccelZ * Time.deltaTime;
-        }
-
-        Quaternion rotate = new Quaternion(-QuatX, -QuatZ, -QuatY, QuatW);
-
-        //Apply the transform
-
-        this.transform.Translate(SpeedX, SpeedZ, SpeedY, Space.Self);
-        this.transform.rotation = rotate;
 
     }
 
     void RealTimeSerialWithAvg()
     {
 
-        string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
-
-        string[] QAData = WholeLine.Split(new[] { ',' });
-
-        if (QAData.Length != 7)
-        {
-            Debug.Log("Invalid input, data abandoned.");
-            return;
-        }
-
+        //Update the LastAccel
         LastAccelX = AccelX;
         LastAccelY = AccelY;
         LastAccelZ = AccelZ;
@@ -154,14 +95,37 @@ public class RacketMovement : MonoBehaviour {
         LastDispY = DispY;
         LastDispZ = DispZ;
 
-        float.TryParse(QAData[0], out QuatW);
-        float.TryParse(QAData[1], out QuatX);
-        float.TryParse(QAData[2], out QuatY);
-        float.TryParse(QAData[3], out QuatZ);
+        //Read a serial message and update Quat and Accel data
+        WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
 
-        float.TryParse(QAData[4], out AccelX);
-        float.TryParse(QAData[5], out AccelY);
-        float.TryParse(QAData[6], out AccelZ);
+        if (WholeLine != null)
+        {
+            QAData = WholeLine.Split(new[] { ',' });
+
+            if (QAData.Length != 7)
+            {
+                //Invalid input, use the same data as the last update
+                Debug.Log("Invalid input, keep last valid data.");
+            }
+            else
+            {
+                //Valid input, update raw Quat and Accel data
+                float.TryParse(QAData[0], out QuatW);
+                float.TryParse(QAData[1], out QuatX);
+                float.TryParse(QAData[2], out QuatY);
+                float.TryParse(QAData[3], out QuatZ);
+
+                float.TryParse(QAData[4], out AccelX);
+                float.TryParse(QAData[5], out AccelY);
+                float.TryParse(QAData[6], out AccelZ);
+
+            }
+        }
+        else
+        {
+            //Empty serial message, use the same data as the last update
+            Debug.Log("Empty serial message, keep last valid data");
+        }
 
         //Update the average
         SumAccelX = AvgAccelX * (AvgSize - 1) + AccelX;
@@ -177,6 +141,10 @@ public class RacketMovement : MonoBehaviour {
         if (MagnitudeAccel < MagnitudeAccelThreshold)
         {
 
+            AccelX = 0;
+            AccelY = 0;
+            AccelZ = 0;
+
             SpeedX = 0;
             SpeedY = 0;
             SpeedZ = 0;
@@ -189,9 +157,9 @@ public class RacketMovement : MonoBehaviour {
         else
         {
             //TODO:Use AvgAccel or Zero mean version Accel?
-            AccelX = AvgAccelX;
-            AccelY = AvgAccelY;
-            AccelZ = AvgAccelZ;
+            AccelX = AvgAccelX - SStateAccelX;
+            AccelY = AvgAccelY - SStateAccelY;
+            AccelZ = AvgAccelZ - SStateAccelZ;
 
             //Apply the double integration
             SpeedX = LastSpeedX + LastAccelX * Time.fixedDeltaTime + (AccelX - LastAccelX) * Time.fixedDeltaTime / 2f;
@@ -204,20 +172,69 @@ public class RacketMovement : MonoBehaviour {
 
         }
 
-
-
-
-        Quaternion rotate = new Quaternion(-QuatX, -QuatZ, -QuatY, QuatW);
+        Rotate = new Quaternion(-QuatX, -QuatZ, -QuatY, QuatW);
 
         //Apply the transform
 
-        this.transform.Translate(SpeedX, SpeedZ, SpeedY, Space.Self);
-        /*
-        this.transform.Translate(Vector3.right * DispX);
-        this.transform.Translate(Vector3.up * DispZ);
-        this.transform.Translate(Vector3.forward * DispY);
-        */
-        this.transform.rotation = rotate;
+        if (ShowDisp)
+        {
+
+            this.transform.Translate(SpeedX, SpeedZ, SpeedY, Space.Self);
+            /*
+            this.transform.Translate(Vector3.right * DispX);
+            this.transform.Translate(Vector3.up * DispZ);
+            this.transform.Translate(Vector3.forward * DispY);
+            */
+
+        }
+
+        this.transform.rotation = Rotate;
+
+    }
+
+    void UpdataSStateAccel()
+    {
+
+        int SStateCounter = 0;
+
+        float TempSumAccelX = 0;
+        float TempSumAccelY = 0;
+        float TempSumAccelZ = 0;
+
+        while (SStateCounter < SStateLength)
+        {
+
+            WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
+
+            if(WholeLine != null)
+            {
+
+                QAData = WholeLine.Split(new[] { ',' });
+
+                if (QAData.Length == 7)
+                {
+
+                    float.TryParse(QAData[4], out AccelX);
+                    float.TryParse(QAData[5], out AccelY);
+                    float.TryParse(QAData[6], out AccelZ);
+
+                    TempSumAccelX += AccelX;
+                    TempSumAccelY += AccelY;
+                    TempSumAccelZ += AccelZ;
+
+                    SStateCounter++;
+
+                }
+
+            }
+
+        }
+
+        SStateAccelX = TempSumAccelX / SStateLength;
+        SStateAccelY = TempSumAccelY / SStateLength;
+        SStateAccelZ = TempSumAccelZ / SStateLength;
+
+        //Debug.Log("SStateAccel Updated!");
 
     }
 
@@ -246,7 +263,6 @@ public class RacketMovement : MonoBehaviour {
         LastDispY = 0;
         LastDispZ = 0;
 
-
         if (UseAvgAccel) {
 
             SumAccelX = 0;
@@ -259,22 +275,27 @@ public class RacketMovement : MonoBehaviour {
             while (IniIndex < AvgSize)
             {
 
-                string WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
+                WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
 
-                string[] QAData = WholeLine.Split(new[] { ',' });
-
-                if (QAData.Length == 7)
+                if(WholeLine != null)
                 {
-                
-                    float.TryParse(QAData[4], out AccelX);
-                    float.TryParse(QAData[5], out AccelY);
-                    float.TryParse(QAData[6], out AccelZ);
 
-                    SumAccelX += AccelX;
-                    SumAccelY += AccelY;
-                    SumAccelZ += AccelZ;
+                    QAData = WholeLine.Split(new[] { ',' });
 
-                    IniIndex++;
+                    if (QAData.Length == 7)
+                    {
+
+                        float.TryParse(QAData[4], out AccelX);
+                        float.TryParse(QAData[5], out AccelY);
+                        float.TryParse(QAData[6], out AccelZ);
+
+                        SumAccelX += AccelX;
+                        SumAccelY += AccelY;
+                        SumAccelZ += AccelZ;
+
+                        IniIndex++;
+
+                    }
 
                 }
 
@@ -287,170 +308,5 @@ public class RacketMovement : MonoBehaviour {
         }
 
     }
-
-    void WithoutAccel()
-    {
-
-        string WholeLine = QuatTestLines[LineIndex];
-
-        string[] QuatData = WholeLine.Split(new[] { ',' });
-
-        if (QuatData.Length != 4)
-        {
-            Debug.Log("Misforned input on line " + LineIndex.ToString());
-
-        }
-        /*
-        else
-        {
-            Debug.Log(QuatData[0] + ", " + QuatData[1] + ", " + QuatData[2] + ", " + QuatData[3]);
-
-        }
-        */
-
-        float.TryParse(QuatData[0], out QuatX);
-        float.TryParse(QuatData[1], out QuatY);
-        float.TryParse(QuatData[2], out QuatZ);
-        float.TryParse(QuatData[3], out QuatW);
-
-        Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
-
-        //Apply the transform
-        this.transform.rotation = rotate;
-
-        LineIndex++;
-        //Repeat the movement
-        if (LineIndex >= QuatTestLines.Length)
-        {
-            LineIndex = 0;
-        }
-
-    }
-
-    void WithAccel()
-    {
-
-        string WholeLine = QuatTestLines[LineIndex];
-
-        string[] QAData = WholeLine.Split(new[] { ',' });
-
-        if (QAData.Length !=7)
-        {
-            Debug.Log("Misforned input on line " + LineIndex.ToString());
-        }
-        /*
-        else
-        {
-            Debug.Log(QAData[0] + ", " + QAData[1] + ", " + QAData[2] + ", " + QAData[3] + ", " + 
-                      QAData[4] + ", " + QAData[5] + ", " + QAData[6]);
-        }
-        */
-
-        float.TryParse(QAData[0], out QuatX);
-        float.TryParse(QAData[1], out QuatY);
-        float.TryParse(QAData[2], out QuatZ);
-        float.TryParse(QAData[3], out QuatW);
-
-        float.TryParse(QAData[4], out AccelX);
-        float.TryParse(QAData[5], out AccelY);
-        float.TryParse(QAData[6], out AccelZ);
-
-        SpeedX += AccelX;
-        SpeedY += AccelY;
-        SpeedZ += AccelZ;
-
-        Quaternion rotate = new Quaternion(QuatX, QuatY, QuatZ, QuatW);
-
-        //Apply the transform
-        this.transform.Translate(SpeedX * Time.deltaTime, SpeedZ * Time.deltaTime, SpeedY * Time.deltaTime, Space.Self);
-        this.transform.rotation = rotate;
-
-        LineIndex++;
-        //Repeat the movement
-        if (LineIndex >= QuatTestLines.Length)
-        {
-            LineIndex = 0;
-        }
-
-    }
-
-    void QuatTests()
-    {
-
-        int index = 0;
-        foreach (string line in QuatTestLines)
-        {
-
-            string WholeLine = line;
-
-            string[] QuatData = WholeLine.Split(new[] { ',' });
-
-            if (QuatData.Length != 4) {
-                Debug.Log("Misforned input on line " + index.ToString());
-            }
-            else
-            {
-                Debug.Log(QuatData[0]+ ", " + QuatData[1] + ", " + QuatData[2] + ", " + QuatData[3]);
-
-            }
-
-            index++;
-
-            
-            float.TryParse(QuatData[0], out QuatX);
-            float.TryParse(QuatData[1], out QuatY);
-            float.TryParse(QuatData[2], out QuatZ);
-            float.TryParse(QuatData[3], out QuatW);
-
-            Quaternion rotate = new Quaternion(QuatX,QuatY,QuatZ,QuatW);
-
-            this.transform.rotation = rotate;         
-
-        }
-
-    }
-    
-    /*
-    void Update()
-    {
-
-        //如果按下W或上方向键
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-        {
-            //以MoveSpeed的速度向正前方移动
-            this.transform.Translate(Vector3.forward * MoveSpeed * Time.deltaTime);
-        }
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-        {
-            this.transform.Translate(Vector3.back * MoveSpeed * Time.deltaTime);
-        }
-
-        //如果按下A或左方向键
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-        {
-            //以RotateSpeed为速度向左旋转
-            this.transform.Rotate(Vector3.down * RotateSpeed);
-        }
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-        {
-            this.transform.Rotate(Vector3.up * RotateSpeed);
-        }
-        if (Input.GetKey(KeyCode.R))
-        {
-            this.transform.rotation = Quaternion.identity;
-        }
-        if (Input.GetKey(KeyCode.X))
-        {
-            Quaternion rotate = Random.rotation;
-            this.transform.rotation = this.transform.rotation * rotate;
-        }
-        if (Input.GetKey(KeyCode.Z))
-        {
-            Quaternion rotate = new Quaternion(0.0f, 0.0f, 0.0f, 0.0f);
-            this.transform.rotation = rotate;
-            //this.transform.rotation = this.transform.rotation * rotate;
-        }
-    }
-    */
 
 }

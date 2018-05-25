@@ -389,6 +389,10 @@ MonoBehaviour:
   DispX: 0
   DispY: 0
   DispZ: 0
+  SStateLength: 64
+  SStateAccelX: 0
+  SStateAccelY: 0
+  SStateAccelZ: 0
   MagnitudeAccelThreshold: 0.25
   UseAvgAccel: 1
   AvgSize: 8
