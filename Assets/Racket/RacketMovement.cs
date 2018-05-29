@@ -9,6 +9,7 @@ public class RacketMovement : MonoBehaviour {
     //Parameters used for serial input
     private string WholeLine;
     string[] QAData;
+    public int MaxLoopCount = 20000; //Set to maximum loop count to avoid initial while loop go to infinity
 
     //Parameters used for reset
     private Vector3 OriginalPosition;
@@ -196,12 +197,13 @@ public class RacketMovement : MonoBehaviour {
     {
 
         int SStateCounter = 0;
+        int LoopCounter = 0;
 
         float TempSumAccelX = 0;
         float TempSumAccelY = 0;
         float TempSumAccelZ = 0;
 
-        while (SStateCounter < SStateLength)
+        while ( (SStateCounter < SStateLength) && (LoopCounter < MaxLoopCount) )
         {
 
             WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
@@ -209,8 +211,9 @@ public class RacketMovement : MonoBehaviour {
             if(WholeLine != null)
             {
 
+                //Debug.Log(WholeLine);
                 QAData = WholeLine.Split(new[] { ',' });
-
+                
                 if (QAData.Length == 7)
                 {
 
@@ -228,6 +231,14 @@ public class RacketMovement : MonoBehaviour {
 
             }
 
+            LoopCounter++;
+            //SStateCounter++;//For debug
+
+        }
+
+        if (LoopCounter >= MaxLoopCount)
+        {
+            Debug.LogWarning("Loop counter exceed limit, number of valid input for SState: " + SStateCounter.ToString());
         }
 
         SStateAccelX = TempSumAccelX / SStateLength;
@@ -271,8 +282,9 @@ public class RacketMovement : MonoBehaviour {
 
             //Initiate the AvgAccel   
             int IniIndex = 0;
+            int LoopCounter = 0;
 
-            while (IniIndex < AvgSize)
+            while ( (IniIndex < AvgSize) && (LoopCounter < MaxLoopCount) )
             {
 
                 WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
@@ -299,6 +311,15 @@ public class RacketMovement : MonoBehaviour {
 
                 }
 
+                LoopCounter++;
+
+                //IniIndex++;//For debug
+
+            }
+
+            if (LoopCounter >= MaxLoopCount)
+            {
+                Debug.LogWarning("Loop counter exceed limit, number of valid input for Avg: " + IniIndex.ToString());
             }
 
             AvgAccelX = SumAccelX / AvgSize;
