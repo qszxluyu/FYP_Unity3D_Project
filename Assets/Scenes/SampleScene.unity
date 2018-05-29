@@ -376,8 +376,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62a4d49458816ed41ad8469e3fd48406, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MaxLoopControl: 1
   MaxLoopCount: 20000
-  ShowDisp: 1
+  ShowDisp: 0
   QuatX: 0
   QuatY: 0
   QuatZ: 0

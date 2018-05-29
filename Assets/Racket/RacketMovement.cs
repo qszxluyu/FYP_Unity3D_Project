@@ -9,6 +9,7 @@ public class RacketMovement : MonoBehaviour {
     //Parameters used for serial input
     private string WholeLine;
     string[] QAData;
+    public bool MaxLoopControl = true;
     public int MaxLoopCount = 20000; //Set to maximum loop count to avoid initial while loop go to infinity
 
     //Parameters used for reset
@@ -203,12 +204,12 @@ public class RacketMovement : MonoBehaviour {
         float TempSumAccelY = 0;
         float TempSumAccelZ = 0;
 
-        while ( (SStateCounter < SStateLength) && (LoopCounter < MaxLoopCount) )
+        while (SStateCounter < SStateLength)
         {
 
             WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
 
-            if(WholeLine != null)
+            if (WholeLine != null)
             {
 
                 //Debug.Log(WholeLine);
@@ -232,11 +233,14 @@ public class RacketMovement : MonoBehaviour {
             }
 
             LoopCounter++;
-            //SStateCounter++;//For debug
+            if (MaxLoopControl && (LoopCounter >= MaxLoopCount))
+            {
+                break;
+            }
 
         }
 
-        if (LoopCounter >= MaxLoopCount)
+        if (MaxLoopControl && (LoopCounter >= MaxLoopCount))
         {
             Debug.LogWarning("Loop counter exceed limit, number of valid input for SState: " + SStateCounter.ToString());
         }
@@ -244,8 +248,6 @@ public class RacketMovement : MonoBehaviour {
         SStateAccelX = TempSumAccelX / SStateLength;
         SStateAccelY = TempSumAccelY / SStateLength;
         SStateAccelZ = TempSumAccelZ / SStateLength;
-
-        //Debug.Log("SStateAccel Updated!");
 
     }
 
@@ -284,12 +286,12 @@ public class RacketMovement : MonoBehaviour {
             int IniIndex = 0;
             int LoopCounter = 0;
 
-            while ( (IniIndex < AvgSize) && (LoopCounter < MaxLoopCount) )
+            while (IniIndex < AvgSize)
             {
 
                 WholeLine = GameObject.Find("RacketPviot").GetComponent<SerialController>().ReadSerialMessage();
 
-                if(WholeLine != null)
+                if (WholeLine != null)
                 {
 
                     QAData = WholeLine.Split(new[] { ',' });
@@ -312,12 +314,16 @@ public class RacketMovement : MonoBehaviour {
                 }
 
                 LoopCounter++;
+                if (MaxLoopControl && (IniIndex > MaxLoopCount))
+                {
+                    break;
+                }
 
                 //IniIndex++;//For debug
 
             }
 
-            if (LoopCounter >= MaxLoopCount)
+            if (MaxLoopControl && (IniIndex > MaxLoopCount))
             {
                 Debug.LogWarning("Loop counter exceed limit, number of valid input for Avg: " + IniIndex.ToString());
             }
