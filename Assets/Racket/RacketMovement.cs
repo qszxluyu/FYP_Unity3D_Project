@@ -5,6 +5,11 @@ using System.Text;
 using UnityEngine;
 
 public class RacketMovement : MonoBehaviour {
+    //Local playback record
+    public bool RecordPlaybackRaw = true;
+    public bool RecordPlayback = false;
+    StreamWriter SW;
+    FileInfo PlaybackFile;
 
     //Parameters used for serial input
     private string WholeLine;
@@ -42,6 +47,16 @@ public class RacketMovement : MonoBehaviour {
 
     void Start()
     {
+        if (RecordPlaybackRaw)
+        {
+            PlaybackFile = new FileInfo(@"..\FYP_Serial_Quat\Assets\Playback\PlaybackRaw.txt");
+            SW = PlaybackFile.CreateText();
+        }
+        else if (RecordPlayback)
+        {
+            PlaybackFile = new FileInfo(@"..\FYP_Serial_Quat\Assets\Playback\Playback.txt");
+            SW = PlaybackFile.CreateText();
+        }
 
         UpdataSStateAccel();
 
@@ -121,6 +136,11 @@ public class RacketMovement : MonoBehaviour {
                 float.TryParse(QAData[5], out AccelY);
                 float.TryParse(QAData[6], out AccelZ);
 
+                if (RecordPlayback)
+                {
+                    SW.WriteLine(WholeLine);
+                }
+
             }
         }
         else
@@ -191,6 +211,11 @@ public class RacketMovement : MonoBehaviour {
         }
 
         this.transform.rotation = Rotate;
+
+        if (RecordPlayback)
+        {
+            //TODO
+        }
 
     }
 
@@ -332,6 +357,15 @@ public class RacketMovement : MonoBehaviour {
             AvgAccelY = SumAccelY / AvgSize;
             AvgAccelZ = SumAccelZ / AvgSize;
 
+        }
+
+    }
+
+    private void OnApplicationQuit()
+    {
+
+        if (RecordPlayback) {
+            SW.Close();
         }
 
     }
