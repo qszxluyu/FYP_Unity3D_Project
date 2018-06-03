@@ -220,6 +220,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Playback\Playback.cs" />
     <Compile Include="Assets\Racket\RacketMovement.cs" />
     <Compile Include="Assets\Scenes\FollowTarget.cs" />
     <Compile Include="Assets\SerialComm\Scripts\Samples\SampleCustomDelimiter.cs" />
@@ -235,6 +236,7 @@
     <Compile Include="Assets\SerialComm\Scripts\Threads\SerialThreadLines.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Playback\Playback.txt" />
     <None Include="Assets\Playback\PlaybackRaw.txt" />
     <None Include="Assets\Racket\MoveWithAccel.txt" />
     <None Include="Assets\Racket\MoveWithAccelZeroMean.txt" />

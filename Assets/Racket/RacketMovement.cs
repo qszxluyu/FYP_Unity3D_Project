@@ -8,8 +8,8 @@ public class RacketMovement : MonoBehaviour {
     //Local playback record
     public bool RecordPlaybackRaw = true;
     public bool RecordPlayback = false;
-    StreamWriter SW;
-    FileInfo PlaybackFile;
+    private StreamWriter SW;
+    private FileInfo PlaybackFile;
 
     //Parameters used for serial input
     private string WholeLine;
@@ -136,7 +136,7 @@ public class RacketMovement : MonoBehaviour {
                 float.TryParse(QAData[5], out AccelY);
                 float.TryParse(QAData[6], out AccelZ);
 
-                if (RecordPlayback)
+                if (RecordPlaybackRaw)
                 {
                     SW.WriteLine(WholeLine);
                 }
@@ -214,7 +214,10 @@ public class RacketMovement : MonoBehaviour {
 
         if (RecordPlayback)
         {
-            //TODO
+            string RecordLine = QuatW.ToString() + "," + QuatX.ToString() + "," + QuatY.ToString() + "," + QuatZ.ToString() +
+                                "," + SpeedX.ToString() + "," + SpeedY.ToString() + "," + SpeedZ.ToString();
+
+            SW.WriteLine(RecordLine);
         }
 
     }
@@ -361,13 +364,9 @@ public class RacketMovement : MonoBehaviour {
 
     }
 
-    private void OnApplicationQuit()
+    private void OnDisable()
     {
-
-        if (RecordPlayback) {
-            SW.Close();
-        }
-
+        SW.Close();
     }
 
 }

@@ -344,6 +344,7 @@ GameObject:
   - component: {fileID: 1405594672}
   - component: {fileID: 1405594673}
   - component: {fileID: 1405594674}
+  - component: {fileID: 1405594675}
   m_Layer: 0
   m_Name: RacketPviot
   m_TagString: Untagged
@@ -376,8 +377,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62a4d49458816ed41ad8469e3fd48406, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RecordPlaybackRaw: 1
-  RecordPlayback: 0
+  RecordPlaybackRaw: 0
+  RecordPlayback: 1
   MaxLoopControl: 1
   MaxLoopCount: 20000
   ShowDisp: 0
@@ -420,6 +421,27 @@ MonoBehaviour:
   messageListener: {fileID: 0}
   reconnectionDelay: 1000
   maxUnreadMessages: 5
+--- !u!114 &1405594675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1405594671}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5f9910d243d2ed4da12b35de9e7e919, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PlaybackRaw: 0
+  ShowDisp: 0
+  PlaybackLine: 
+  QuatX: 0
+  QuatY: 0
+  QuatZ: 0
+  QuatW: 0
+  SpeedX: 0
+  SpeedY: 0
+  SpeedZ: 0
 --- !u!4 &1880234462 stripped
 Transform:
   m_PrefabParentObject: {fileID: 400012, guid: b48bfdaee22d57144ada71dc98748f0e, type: 3}
